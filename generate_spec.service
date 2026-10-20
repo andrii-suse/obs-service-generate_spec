@@ -1,0 +1,28 @@
+<service name="generate_spec">
+  <summary>Automatically generate an RPM .spec file from upstream repository metadata</summary>
+  <description>Detects upstream project manifests (such as go.mod, Cargo.toml, pyproject.toml) and generates an idiomatic RPM .spec file and offline vendored dependencies when needed.</description>
+  <parameter name="name">
+    <description>Override the package name (defaults to upstream repository / module name)</description>
+  </parameter>
+  <parameter name="version">
+    <description>Override the package version (defaults to @VERSION@ or manifest version)</description>
+  </parameter>
+  <parameter name="compression">
+    <description>Compression algorithm for vendored dependencies archive (zst, xz, gz). Default is zst.</description>
+    <allowedvalue>zst</allowedvalue>
+    <allowedvalue>xz</allowedvalue>
+    <allowedvalue>gz</allowedvalue>
+  </parameter>
+  <parameter name="flavor">
+    <description>Force a specific generator flavor (e.g. go, rust, python)</description>
+  </parameter>
+  <parameter name="vendor">
+    <description>Vendor dependencies offline (auto, enable, disable). Default is auto.</description>
+    <allowedvalue>auto</allowedvalue>
+    <allowedvalue>enable</allowedvalue>
+    <allowedvalue>disable</allowedvalue>
+  </parameter>
+  <parameter name="source-dir">
+    <description>Directory containing unpacked sources (defaults to current working directory)</description>
+  </parameter>
+</service>
