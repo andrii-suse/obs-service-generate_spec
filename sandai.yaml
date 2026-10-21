@@ -1,0 +1,40 @@
+version: "1"
+
+orchestrator:
+  afk: false
+  worktree_dir: ".sandai/worktrees"
+
+agent:
+  name: "gemini"
+  # model: "gemini-2.5-pro"
+
+sandbox:
+  provider: "podman"
+  image: "localhost/ai-agents-sandbox-gemini:latest"
+
+  security:
+    cap_drop:
+      - ALL
+    no_new_privileges: true
+    userns: "keep-id"
+
+  network:
+    enforcement: "strict"
+    allow_web_search: true
+    allow_domains:
+      - "oauth2.googleapis.com"
+      - "cloudcode-pa.googleapis.com"
+      - "play.googleapis.com"
+      - "generativelanguage.googleapis.com"
+      - "github.com"
+      - "api.github.com"
+      - "openbuildservice.org"
+      - "wiki.opensuse.org"
+
+hooks:
+  after_run:
+    timeout: 180s
+    steps:
+      - name: t
+        command: "python3 -m unittest discover tests -v"
+
