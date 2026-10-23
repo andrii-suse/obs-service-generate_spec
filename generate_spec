@@ -26,16 +26,17 @@ def is_our_generated_spec(spec_path: Path) -> bool:
         return False
 
 
-def check_existing_spec(search_dir: Path) -> str | None:
+def check_existing_spec(search_dir: Path, explicit_source_dir: bool = False) -> str | None:
     """
     Checks if a custom/human-maintained RPM spec file already exists.
     If a spec file contains GENERATOR_SIGNATURE, it is considered a previous run's artifact
     and allowed to be updated/regenerated for a new release.
     """
     search_dirs = [search_dir]
-    cwd = Path.cwd().resolve()
-    if cwd != search_dir:
-        search_dirs.append(cwd)
+    if not explicit_source_dir:
+        cwd = Path.cwd().resolve()
+        if cwd != search_dir and search_dir.is_relative_to(cwd):
+            search_dirs.append(cwd)
 
     # 1. Check directly on disk for plain or service-prefixed specs
     for p in search_dirs:
@@ -140,7 +141,7 @@ def locate_source_directory(source_dir_arg: str | None) -> Path:
     return cwd
 
 
-def resolve_version(source_dir: Path, requested_version: str | None) -> str:
+def resolve_version(source_dir: Path, requested_version: str | None, explicit_source_dir: bool = False) -> str:
     """
     Resolves package version using a 5-tier resolution hierarchy:
     1. Explicit requested version (if not @VERSION@)
@@ -154,9 +155,10 @@ def resolve_version(source_dir: Path, requested_version: str | None) -> str:
 
     # Tier 1: Check *.obsinfo (e.g. _scmsync.obsinfo)
     search_dirs = [source_dir]
-    cwd = Path.cwd().resolve()
-    if cwd != source_dir:
-        search_dirs.append(cwd)
+    if not explicit_source_dir:
+        cwd = Path.cwd().resolve()
+        if cwd != source_dir and source_dir.is_relative_to(cwd):
+            search_dirs.append(cwd)
 
     for p in search_dirs:
         for obsinfo in list(p.glob("*.obsinfo")) + list(p.glob("_scmsync.obsinfo")):
@@ -247,10 +249,11 @@ def main():
     outdir.mkdir(parents=True, exist_ok=True)
 
     source_dir = locate_source_directory(args.source_dir)
+    explicit_source_dir = bool(args.source_dir)
     print(f"generate_spec: Checking source directory '{source_dir}'...")
 
     # Step 1: No-Op Guard
-    existing_spec = check_existing_spec(source_dir)
+    existing_spec = check_existing_spec(source_dir, explicit_source_dir=explicit_source_dir)
     if existing_spec:
         print(f"generate_spec: Existing spec file found ('{existing_spec}'). Skipping spec generation.")
         sys.exit(0)
@@ -264,7 +267,7 @@ def main():
         sys.exit(0)
 
     # Step 3: Match and Dispatch
-    resolved_version = resolve_version(source_dir, args.version)
+    resolved_version = resolve_version(source_dir, args.version, explicit_source_dir=explicit_source_dir)
 
     for prio, manifest_mask, plugin_exec in plugins:
         # Check flavor filter if provided

@@ -359,12 +359,14 @@ def create_vendor_archive(source_dir: Path, outdir: Path, compression: str, vend
 
     print(f"Packaging {vendor_dir} into {out_archive}...")
     if compression == "zst":
-        # tar -c vendor | zstd -T0 -19 -o <out_archive>
+        # tar -c vendor | zstd -T0 -19 > <out_archive>
         tar_proc = subprocess.Popen(["tar", "-cf", "-", "vendor"], cwd=source_dir, stdout=subprocess.PIPE)
         with open(out_archive, "wb") as f_out:
-            zstd_proc = subprocess.Popen(["zstd", "-T0", "-19", "-o", str(out_archive)], stdin=tar_proc.stdout)
+            zstd_proc = subprocess.Popen(["zstd", "-T0", "-19"], stdin=tar_proc.stdout, stdout=f_out)
             tar_proc.stdout.close()
             zstd_proc.communicate()
+            if zstd_proc.returncode != 0:
+                print(f"Warning: zstd failed with exit code {zstd_proc.returncode}", file=sys.stderr)
     elif compression == "xz":
         subprocess.run(["tar", "-cJf", str(out_archive), "vendor"], cwd=source_dir, check=True)
     elif compression == "gz":
