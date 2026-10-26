@@ -10,10 +10,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).parent.parent.parent.resolve()
-SERVICE_DIR = REPO_ROOT / "obs-service-generate_spec"
+SERVICE_DIR = Path(__file__).resolve().parent.parent
+if not (SERVICE_DIR / "generate_spec").is_file():
+    REPO_ROOT = Path(__file__).parent.parent.parent.resolve()
+    SERVICE_DIR = REPO_ROOT / "obs-service-generate_spec"
+else:
+    REPO_ROOT = SERVICE_DIR.parent
+
 GENERATE_SPEC_BIN = SERVICE_DIR / "generate_spec"
-EXAMPLES_DIR = REPO_ROOT / "examples"
+EXAMPLES_DIR = REPO_ROOT / "examples" if (REPO_ROOT / "examples").is_dir() else (SERVICE_DIR / "examples")
 
 
 class TestGenerateSpec(unittest.TestCase):
